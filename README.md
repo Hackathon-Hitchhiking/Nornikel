@@ -1,5 +1,11 @@
 ## C4
-![C4.png](.assets/C4.png)
+![C4.jpg](.assets/C4.jpg)
+
+## inference pipeline
+![inferense.jpg](.assets/inferense.jpg)
+
+## Indexing
+![index.jpg](.assets/index.jpg)
 
 ## Как запустить
 ### 1. Клонирование репозитория
