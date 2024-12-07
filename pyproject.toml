@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "fastapitemplate"
+version = "0.1.0"
+description = ""
+authors = ["kirill <shkolenko02-03-2004@mail.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = {extras = ["all"], version = "^0.103.0"}
+alembic = "^1.11.3"
+loguru = "^0.7.0"
+ruff = "^0.3.7"
+pre-commit = "^3.7.0"
+asyncpg = "^0.29.0"
+qdrant-client = "^1.12.1"
+minio = "^7.2.12"
+atlassian-python-api = "^3.41.16"
+notion-client = "^2.2.1"
+colpali-engine = "^0.3.4"
+
+[tool.ruff]
+exclude = ["models/__init__.py"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
