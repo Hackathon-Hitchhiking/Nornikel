@@ -1,5 +1,5 @@
-## Inference pipline
-![Inference.png](.assets/Inference.png)
+## C4
+![C4.png](.assets/C4.png)
 
 ## Как запустить
 ### 1. Клонирование репозитория
