@@ -5,7 +5,7 @@ from qdrant_client.grpc import ScoredPoint
 from qdrant_client.qdrant_client import QdrantClient
 
 from configs.Qdrant import get_client, env
-from schemas.documnet import CreateDocumentOpts
+from schemas.processor import CreateDocumentOpts
 
 
 class QdrantRepository:

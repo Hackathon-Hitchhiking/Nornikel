@@ -1,7 +1,6 @@
 from typing import Generator, Dict, Any, List
 from io import BytesIO
 import base64
-import os
 
 from docx import Document
 from docx.text.paragraph import Paragraph
@@ -64,7 +63,7 @@ class DocxProcessor:
         """
         r_element = run._r
         drawing_elements = r_element.findall(
-            './/{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing'
+            ".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing"
         )
         return bool(drawing_elements)
 
@@ -74,22 +73,24 @@ class DocxProcessor:
         """
         r_element = run._r
         drawing_elements = r_element.findall(
-            './/{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing'
+            ".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing"
         )
         for drawing in drawing_elements:
             blip_elements = drawing.findall(
-                './/{http://schemas.openxmlformats.org/drawingml/2006/main}blip'
+                ".//{http://schemas.openxmlformats.org/drawingml/2006/main}blip"
             )
             if blip_elements:
                 embed = blip_elements[0].get(
-                    '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed'
+                    "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed"
                 )
                 image_part = run.part.related_parts[embed]
                 image_bytes = image_part.blob
                 return image_bytes
         return None
 
-    def _extract_tokens_with_positions(self, document: Document) -> (List[Dict[str, Any]], int):
+    def _extract_tokens_with_positions(
+        self, document: Document
+    ) -> (List[Dict[str, Any]], int):
         """
         Извлекает текст и изображения из документа в порядке их следования, с позициями.
         :param document: Объект документа.
@@ -105,19 +106,25 @@ class DocxProcessor:
                     if self.run_has_image(run):
                         image_bytes = self.extract_image_from_run(run)
                         if image_bytes:
-                            tokens.append({
-                                "type": "image",
-                                "image_bytes": base64.b64encode(image_bytes).decode("utf-8"),
-                                "position": current_word_position,
-                            })
+                            tokens.append(
+                                {
+                                    "type": "image",
+                                    "image_bytes": base64.b64encode(image_bytes).decode(
+                                        "utf-8"
+                                    ),
+                                    "position": current_word_position,
+                                }
+                            )
                     if run.text.strip():
                         words = run.text.strip().split()
                         for word in words:
-                            tokens.append({
-                                "type": "word",
-                                "content": word,
-                                "position": current_word_position,
-                            })
+                            tokens.append(
+                                {
+                                    "type": "word",
+                                    "content": word,
+                                    "position": current_word_position,
+                                }
+                            )
                             current_word_position += 1
             elif isinstance(block, Table):
                 pass
@@ -126,7 +133,8 @@ class DocxProcessor:
         return tokens, total_words
 
     def _generate_chunks_with_metadata(
-            self, tokens: List[Dict[str, Any]],
+        self,
+        tokens: List[Dict[str, Any]],
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Создает чанки текста с метаданными.
@@ -139,13 +147,13 @@ class DocxProcessor:
         chunk_id = 0
 
         while idx < total_tokens:
-            chunk_tokens = tokens[idx: idx + self.chunk_size]
-            chunk_text = ' '.join(
-                token['content'] for token in chunk_tokens if token['type'] == 'word'
+            chunk_tokens = tokens[idx : idx + self.chunk_size]
+            chunk_text = " ".join(
+                token["content"] for token in chunk_tokens if token["type"] == "word"
             )
-            chunk_images = [token for token in chunk_tokens if token['type'] == 'image']
-            start_word = chunk_tokens[0]['position']
-            end_word = chunk_tokens[-1]['position'] + 1
+            chunk_images = [token for token in chunk_tokens if token["type"] == "image"]
+            start_word = chunk_tokens[0]["position"]
+            end_word = chunk_tokens[-1]["position"] + 1
 
             chunk_id += 1
             yield {
@@ -154,9 +162,10 @@ class DocxProcessor:
                     "start_word": start_word,
                     "end_word": end_word,
                     "images": chunk_images,
-                }
+                },
             }
             idx += self.chunk_size - self.overlap
+
 
 class PdfProcessor:
     """
@@ -191,7 +200,7 @@ class PdfProcessor:
         current_word_position = 0
 
         # Открываем PDF из байтов
-        pdf_document = fitz.open(stream=file_bytes, filetype='pdf')
+        pdf_document = fitz.open(stream=file_bytes, filetype="pdf")
 
         for page_number in range(len(pdf_document)):
             page = pdf_document[page_number]
@@ -199,12 +208,14 @@ class PdfProcessor:
             if text:
                 words = text.strip().split()
                 for word in words:
-                    tokens.append({
-                        "type": "word",
-                        "content": word,
-                        "position": current_word_position,
-                        "page_number": page_number + 1
-                    })
+                    tokens.append(
+                        {
+                            "type": "word",
+                            "content": word,
+                            "position": current_word_position,
+                            "page_number": page_number + 1,
+                        }
+                    )
                     current_word_position += 1
 
             # Извлечение изображений
@@ -214,20 +225,27 @@ class PdfProcessor:
                 try:
                     base_image = pdf_document.extract_image(xref)
                     image_bytes = base_image["image"]
-                    tokens.append({
-                        "type": "image",
-                        "image_bytes": base64.b64encode(image_bytes).decode('utf-8'),
-                        "position": current_word_position,
-                        "page_number": page_number + 1
-                    })
+                    tokens.append(
+                        {
+                            "type": "image",
+                            "image_bytes": base64.b64encode(image_bytes).decode(
+                                "utf-8"
+                            ),
+                            "position": current_word_position,
+                            "page_number": page_number + 1,
+                        }
+                    )
                 except Exception as e:
-                    print(f"Ошибка при извлечении изображения на странице {page_number + 1}: {e}")
+                    print(
+                        f"Ошибка при извлечении изображения на странице {page_number + 1}: {e}"
+                    )
 
         pdf_document.close()
         return tokens
 
     def _generate_chunks_with_metadata(
-            self, tokens: List[Dict[str, Any]],
+        self,
+        tokens: List[Dict[str, Any]],
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Создает чанки текста с метаданными.
@@ -239,13 +257,13 @@ class PdfProcessor:
         chunk_id = 0
 
         while idx < total_tokens:
-            chunk_tokens = tokens[idx: idx + self.chunk_size]
-            chunk_text = ' '.join(
-                token['content'] for token in chunk_tokens if token['type'] == 'word'
+            chunk_tokens = tokens[idx : idx + self.chunk_size]
+            chunk_text = " ".join(
+                token["content"] for token in chunk_tokens if token["type"] == "word"
             )
-            chunk_images = [token for token in chunk_tokens if token['type'] == 'image']
-            start_word = chunk_tokens[0]['position']
-            end_word = chunk_tokens[-1]['position'] + 1
+            chunk_images = [token for token in chunk_tokens if token["type"] == "image"]
+            start_word = chunk_tokens[0]["position"]
+            end_word = chunk_tokens[-1]["position"] + 1
 
             chunk_id += 1
             yield {
@@ -254,7 +272,7 @@ class PdfProcessor:
                     "start_word": start_word,
                     "end_word": end_word,
                     "images": chunk_images,
-                }
+                },
             }
             idx += self.chunk_size - self.overlap
 
@@ -291,7 +309,9 @@ class PptxProcessor:
         """
         return Presentation(BytesIO(file_bytes))
 
-    def _extract_tokens_with_positions(self, presentation: Presentation) -> (List[Dict[str, Any]], int):
+    def _extract_tokens_with_positions(
+        self, presentation: Presentation
+    ) -> (List[Dict[str, Any]], int):
         """
         Извлекает текст и изображения из презентации в порядке их следования, с позициями.
         :param presentation: Объект презентации.
@@ -308,30 +328,36 @@ class PptxProcessor:
                         for run in paragraph.runs:
                             words = run.text.strip().split()
                             for word in words:
-                                tokens.append({
-                                    "type": "word",
-                                    "content": word,
-                                    "position": current_word_position,
-                                    "slide_number": slide_number
-                                })
+                                tokens.append(
+                                    {
+                                        "type": "word",
+                                        "content": word,
+                                        "position": current_word_position,
+                                        "slide_number": slide_number,
+                                    }
+                                )
                                 current_word_position += 1
 
                 # Извлечение изображений
                 if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                     image = shape.image
                     image_bytes = image.blob
-                    tokens.append({
-                        "type": "image",
-                        "image_bytes": base64.b64encode(image_bytes).decode("utf-8"),
-                        "position": current_word_position,
-                        "slide_number": slide_number
-                    })
+                    tokens.append(
+                        {
+                            "type": "image",
+                            "image_bytes": base64.b64encode(image_bytes).decode(
+                                "utf-8"
+                            ),
+                            "position": current_word_position,
+                            "slide_number": slide_number,
+                        }
+                    )
 
         total_words = current_word_position
         return tokens, total_words
 
     def _generate_chunks_with_metadata(
-            self, tokens: List[Dict[str, Any]], total_words: int
+        self, tokens: List[Dict[str, Any]], total_words: int
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Создает чанки текста с метаданными.
@@ -344,13 +370,13 @@ class PptxProcessor:
         chunk_id = 0
 
         while idx < total_tokens:
-            chunk_tokens = tokens[idx: idx + self.chunk_size]
-            chunk_text = ' '.join(
-                token['content'] for token in chunk_tokens if token['type'] == 'word'
+            chunk_tokens = tokens[idx : idx + self.chunk_size]
+            chunk_text = " ".join(
+                token["content"] for token in chunk_tokens if token["type"] == "word"
             )
-            chunk_images = [token for token in chunk_tokens if token['type'] == 'image']
-            start_word = chunk_tokens[0]['position']
-            end_word = chunk_tokens[-1]['position'] + 1
+            chunk_images = [token for token in chunk_tokens if token["type"] == "image"]
+            start_word = chunk_tokens[0]["position"]
+            end_word = chunk_tokens[-1]["position"] + 1
 
             chunk_id += 1
             yield {
@@ -359,7 +385,9 @@ class PptxProcessor:
                     "start_word": start_word,
                     "end_word": end_word,
                     "images": chunk_images,
-                    "slide_numbers": list(set(token['slide_number'] for token in chunk_tokens))
-                }
+                    "slide_numbers": list(
+                        set(token["slide_number"] for token in chunk_tokens)
+                    ),
+                },
             }
             idx += self.chunk_size - self.overlap

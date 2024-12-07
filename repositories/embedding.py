@@ -10,7 +10,7 @@ class EmbeddingRepository:
     def __init__(self):
         self.device = device
 
-    def extract_text_embedding(self, text: str) -> torch.Tensor:
+    def extract_text_embeddings(self, text: str) -> torch.Tensor:
         with torch.inference_mode():
             processed_text = embedding_processor.process_queries(text).to(self.device)
             text_embedding = embedding_model(processed_text)

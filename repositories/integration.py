@@ -20,6 +20,13 @@ class BaseIntegrator(ABC):
         pass
 
     @abstractmethod
+    def source(self) -> str:
+        """
+        Return the source of the integrator.
+        """
+        pass
+
+    @abstractmethod
     def close(self):
         pass
 
@@ -45,6 +52,9 @@ class ConfluenceIntegration(BaseIntegrator):
             )
 
         return pdfs
+
+    def source(self) -> str:
+        return "Confluence"
 
     def close(self):
         self._conn.close()
@@ -76,6 +86,9 @@ class NotionIntegration(BaseIntegrator):
                 content += f"{paragraph_text}\n\n"
 
         return contents
+
+    def source(self) -> str:
+        return "Notion"
 
     def close(self):
         self._conn.close()

@@ -20,3 +20,8 @@ class MinioService:
         return self._repo.create_object_from_byte(
             f"docx/{id.__str__()}/{title}.docx", file, MinioContentType.DOCX
         )
+
+    def save_pptx(self, id: uuid.UUID, title: str, file: BytesIO) -> str:
+        return self._repo.create_object_from_byte(
+            f"pptx/{id.__str__()}/{title}.pptx", file, MinioContentType.PPTX
+        )
